@@ -1,1 +1,1507 @@
+/* =========================================================
+   RESET
+========================================================= */
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at 50% -10%,
+            #20262c 0%,
+            #111519 38%,
+            #080a0c 100%
+        );
+
+    color: #f4f6f7;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Hiragino Sans",
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        "Noto Sans JP",
+        sans-serif;
+
+    -webkit-font-smoothing: antialiased;
+
+    padding-bottom:
+        env(safe-area-inset-bottom);
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.app-header {
+
+    position: sticky;
+    top: 0;
+
+    z-index: 100;
+
+    background:
+        rgba(7, 9, 11, 0.94);
+
+    border-bottom:
+        1px solid rgba(255,255,255,0.08);
+
+    backdrop-filter:
+        blur(18px);
+
+    -webkit-backdrop-filter:
+        blur(18px);
+}
+
+.header-inner {
+
+    max-width: 1100px;
+
+    min-height: 140px;
+
+    margin: 0 auto;
+
+    padding:
+        28px 22px 24px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+.brand-small {
+
+    font-size: 15px;
+
+    font-weight: 900;
+
+    letter-spacing: 5px;
+
+    color: #80878e;
+
+    margin-bottom: 7px;
+}
+
+.brand h1 {
+
+    font-size: clamp(25px, 6vw, 38px);
+
+    line-height: 1.15;
+
+    font-weight: 950;
+
+    letter-spacing: -1px;
+}
+
+.status-pill {
+
+    flex-shrink: 0;
+
+    min-width: 118px;
+
+    padding:
+        12px 18px;
+
+    border:
+        1px solid rgba(255,255,255,0.11);
+
+    border-radius: 999px;
+
+    background:
+        rgba(255,255,255,0.055);
+
+    color: #aeb5bb;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.app-main {
+
+    width: min(
+        calc(100% - 28px),
+        1100px
+    );
+
+    margin: 0 auto;
+
+    padding:
+        22px 0 70px;
+}
+
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.search-card,
+.category-card,
+.weapon-card,
+.detail-card,
+.detail-header,
+.source-card {
+
+    border:
+        1px solid rgba(255,255,255,0.10);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(31,36,42,0.92),
+            rgba(17,21,25,0.92)
+        );
+
+    border-radius: 28px;
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,0.18);
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.search-card {
+
+    padding: 32px;
+
+    margin-bottom: 18px;
+}
+
+.search-box {
+
+    min-height: 78px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding:
+        0 24px;
+
+    border:
+        1px solid rgba(255,255,255,0.12);
+
+    border-radius: 24px;
+
+    background:
+        rgba(7,9,11,0.42);
+
+    transition:
+        border-color .2s,
+        box-shadow .2s;
+}
+
+.search-box:focus-within {
+
+    border-color:
+        rgba(255,255,255,0.28);
+
+    box-shadow:
+        0 0 0 4px rgba(255,255,255,0.035);
+}
+
+.search-icon {
+
+    font-size: 31px;
+
+    color: #737b83;
+
+    line-height: 1;
+}
+
+.search-box input {
+
+    width: 100%;
+
+    height: 72px;
+
+    border: 0;
+
+    outline: 0;
+
+    background: transparent;
+
+    color: #fff;
+
+    font-size: 22px;
+
+    font-weight: 700;
+}
+
+.search-box input::placeholder {
+
+    color: #687078;
+
+    font-weight: 600;
+}
+
+.search-box input::-webkit-search-cancel-button {
+
+    filter:
+        invert(1);
+
+    opacity: .7;
+}
+
+
+/* =========================================================
+   SECTION TITLES
+========================================================= */
+
+.category-card,
+.weapon-card {
+
+    margin-bottom: 18px;
+
+    overflow: hidden;
+}
+
+.section-title-row {
+
+    min-height: 94px;
+
+    padding:
+        0 30px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    border-bottom:
+        1px solid rgba(255,255,255,0.08);
+}
+
+.section-title-row h2 {
+
+    font-size: 23px;
+
+    font-weight: 950;
+}
+
+.count-pill {
+
+    min-width: 54px;
+
+    height: 42px;
+
+    padding:
+        0 16px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 999px;
+
+    background:
+        rgba(255,255,255,0.08);
+
+    color: #b8bec3;
+
+    font-weight: 900;
+}
+
+
+/* =========================================================
+   CATEGORY
+========================================================= */
+
+.category-list {
+
+    padding: 20px;
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+}
+
+.category-button {
+
+    appearance: none;
+
+    border: 1px solid rgba(255,255,255,0.10);
+
+    background:
+        rgba(255,255,255,0.045);
+
+    color: #aeb5bb;
+
+    padding:
+        12px 17px;
+
+    border-radius: 999px;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: 850;
+
+    cursor: pointer;
+
+    transition:
+        transform .15s,
+        background .15s,
+        color .15s,
+        border-color .15s;
+}
+
+.category-button:active {
+
+    transform: scale(.96);
+}
+
+.category-button:hover {
+
+    background:
+        rgba(255,255,255,0.08);
+}
+
+.category-button.active {
+
+    background: #f4f6f7;
+
+    color: #0b0d0f;
+
+    border-color: #f4f6f7;
+
+    box-shadow:
+        0 7px 22px rgba(0,0,0,0.2);
+}
+
+
+/* =========================================================
+   WEAPON LIST
+========================================================= */
+
+.weapon-list {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 1px;
+
+    background:
+        rgba(255,255,255,0.07);
+}
+
+.weapon-item {
+
+    appearance: none;
+
+    border: 0;
+
+    border-radius: 0;
+
+    min-height: 72px;
+
+    padding:
+        16px 20px;
+
+    background:
+        #151a1e;
+
+    color: #f4f6f7;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    text-align: left;
+
+    font-family: inherit;
+
+    cursor: pointer;
+
+    transition:
+        background .15s,
+        transform .15s;
+}
+
+.weapon-item:hover {
+
+    background:
+        #20262b;
+}
+
+.weapon-item:active {
+
+    transform: scale(.985);
+}
+
+.weapon-item-name {
+
+    font-size: 16px;
+
+    font-weight: 850;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.weapon-item-arrow {
+
+    color: #687179;
+
+    font-size: 27px;
+
+    line-height: 1;
+}
+
+
+/* =========================================================
+   EMPTY / LOADING / ERROR
+========================================================= */
+
+.empty-list,
+.loading-box,
+.error-box {
+
+    min-height: 220px;
+
+    padding: 35px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-align: center;
+
+    background:
+        #101417;
+}
+
+.empty-list {
+
+    grid-column:
+        1 / -1;
+}
+
+.empty-icon,
+.placeholder-mark {
+
+    width: 58px;
+
+    height: 58px;
+
+    margin-bottom: 18px;
+
+    border:
+        1px solid rgba(255,255,255,0.12);
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color: #778087;
+
+    font-size: 27px;
+}
+
+.empty-list strong {
+
+    font-size: 18px;
+
+    margin-bottom: 8px;
+}
+
+.empty-list span {
+
+    color: #6e777f;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   DETAIL AREA
+========================================================= */
+
+.detail-area {
+
+    margin-top: 20px;
+}
+
+.detail-placeholder {
+
+    min-height: 620px;
+
+    border:
+        1px dashed rgba(255,255,255,0.14);
+
+    border-radius: 30px;
+
+    background:
+        rgba(4,6,8,0.42);
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-align: center;
+
+    padding: 40px;
+}
+
+.detail-placeholder h2 {
+
+    font-size: 24px;
+
+    margin-bottom: 12px;
+}
+
+.detail-placeholder p {
+
+    color: #747e86;
+
+    font-size: 16px;
+
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   DETAIL HEADER
+========================================================= */
+
+.detail-header {
+
+    margin-bottom: 18px;
+
+    padding: 28px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+.detail-kicker {
+
+    color: #717a82;
+
+    font-size: 12px;
+
+    font-weight: 900;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 7px;
+}
+
+.detail-header h2 {
+
+    font-size: clamp(26px, 7vw, 40px);
+
+    line-height: 1.15;
+
+    font-weight: 950;
+}
+
+.cache-delete {
+
+    flex-shrink: 0;
+
+    appearance: none;
+
+    border:
+        1px solid rgba(255,255,255,0.10);
+
+    background:
+        rgba(255,255,255,0.05);
+
+    color: #8d969d;
+
+    border-radius: 13px;
+
+    padding:
+        10px 13px;
+
+    font-family: inherit;
+
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   DETAIL CARD
+========================================================= */
+
+.detail-card {
+
+    margin-bottom: 18px;
+
+    padding: 28px;
+}
+
+.detail-card h3 {
+
+    margin-bottom: 22px;
+
+    font-size: 20px;
+
+    font-weight: 950;
+}
+
+
+/* =========================================================
+   STAT GRID
+========================================================= */
+
+.stat-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+}
+
+.stat {
+
+    min-height: 76px;
+
+    padding:
+        15px 17px;
+
+    border:
+        1px solid rgba(255,255,255,0.07);
+
+    border-radius: 17px;
+
+    background:
+        rgba(0,0,0,0.18);
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+}
+
+.stat span {
+
+    color: #737c84;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    margin-bottom: 6px;
+}
+
+.stat strong {
+
+    color: #f4f6f7;
+
+    font-size: 16px;
+
+    font-weight: 900;
+}
+
+
+/* =========================================================
+   RANGE
+========================================================= */
+
+.range-number {
+
+    font-size: 42px;
+
+    font-weight: 950;
+
+    margin-bottom: 22px;
+}
+
+.range-number span {
+
+    margin-left: 6px;
+
+    color: #727b83;
+
+    font-size: 14px;
+
+    font-weight: 800;
+}
+
+.range-graph {
+
+    padding:
+        12px 0;
+}
+
+.range-track {
+
+    position: relative;
+
+    height: 26px;
+
+    border-radius: 999px;
+
+    background:
+        rgba(255,255,255,0.07);
+
+    overflow: visible;
+}
+
+.range-paint {
+
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    height: 100%;
+
+    border-radius: 999px;
+
+    background:
+        rgba(255,255,255,0.22);
+}
+
+.range-main {
+
+    position: absolute;
+
+    left: 0;
+    top: 3px;
+
+    height: 20px;
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #f4f6f7,
+            #9ca4aa
+        );
+}
+
+
+/* =========================================================
+   BLAST ENDPOINT
+========================================================= */
+
+.blast-endpoint {
+
+    position: absolute;
+
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    width: 20px;
+
+    height: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    pointer-events: none;
+}
+
+.blast-endpoint::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 9px;
+
+    height: 9px;
+
+    border-radius: 50%;
+
+    background: #fff;
+
+    box-shadow:
+        0 0 0 3px rgba(0,0,0,0.7);
+}
+
+.blast-endpoint-circle {
+
+    position: absolute;
+
+    border:
+        2px solid rgba(255,255,255,0.45);
+
+    border-radius: 50%;
+
+    background:
+        rgba(255,255,255,0.07);
+}
+
+.range-scale {
+
+    margin-top: 12px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    color: #656e76;
+
+    font-size: 11px;
+
+    font-weight: 800;
+}
+
+.range-legend {
+
+    margin-top: 16px;
+
+    display: flex;
+
+    gap: 20px;
+
+    flex-wrap: wrap;
+
+    color: #858e95;
+
+    font-size: 12px;
+
+    font-weight: 800;
+}
+
+.range-legend span {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+}
+
+.range-legend i {
+
+    width: 18px;
+
+    height: 6px;
+
+    display: block;
+
+    border-radius: 999px;
+}
+
+.legend-main {
+
+    background: #f4f6f7;
+}
+
+.legend-paint {
+
+    background: rgba(255,255,255,0.25);
+}
+
+
+/* =========================================================
+   DAMAGE
+========================================================= */
+
+.damage-values {
+
+    display: flex;
+
+    gap: 12px;
+
+    margin-bottom: 24px;
+}
+
+.damage-values > div {
+
+    flex: 1;
+
+    min-height: 94px;
+
+    padding: 18px;
+
+    border-radius: 19px;
+
+    background:
+        rgba(0,0,0,0.2);
+
+    border:
+        1px solid rgba(255,255,255,0.07);
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+}
+
+.damage-values strong {
+
+    font-size: 30px;
+
+    font-weight: 950;
+}
+
+.damage-values span {
+
+    color: #747d85;
+
+    font-size: 12px;
+
+    font-weight: 800;
+}
+
+.damage-row {
+
+    display: grid;
+
+    grid-template-columns:
+        42px 1fr 48px;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 14px;
+}
+
+.damage-row > span {
+
+    color: #788188;
+
+    font-size: 12px;
+
+    font-weight: 850;
+}
+
+.damage-row strong {
+
+    text-align: right;
+
+    font-size: 14px;
+}
+
+.damage-track {
+
+    height: 15px;
+
+    border-radius: 999px;
+
+    overflow: hidden;
+
+    background:
+        rgba(255,255,255,0.06);
+}
+
+.damage-fill {
+
+    height: 100%;
+
+    border-radius: 999px;
+
+    background:
+        #f4f6f7;
+}
+
+.damage-fill.min {
+
+    background:
+        #8d969d;
+}
+
+
+/* =========================================================
+   FALLOFF
+========================================================= */
+
+.falloff-chart {
+
+    position: relative;
+
+    width: 100%;
+
+    height: 210px;
+
+    border:
+        1px solid rgba(255,255,255,0.08);
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(255,255,255,0.035),
+            rgba(255,255,255,0.008)
+        );
+
+    overflow: hidden;
+}
+
+.falloff-chart::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 49px,
+            rgba(255,255,255,0.045) 50px
+        );
+}
+
+.falloff-chart svg {
+
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    color: #f4f6f7;
+}
+
+.falloff-label {
+
+    position: absolute;
+
+    right: 13px;
+
+    font-size: 12px;
+
+    font-weight: 900;
+
+    color: #aab1b6;
+}
+
+.falloff-label.max {
+
+    top: 15px;
+}
+
+.falloff-label.min {
+
+    bottom: 15px;
+}
+
+.falloff-axis {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    color: #687179;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    margin-top: 9px;
+}
+
+
+/* =========================================================
+   BLAST GRAPH
+========================================================= */
+
+.blast-graph {
+
+    min-height: 240px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 35px;
+
+    padding: 25px;
+}
+
+.blast-circle {
+
+    flex-shrink: 0;
+
+    max-width: 220px;
+    max-height: 220px;
+
+    border:
+        2px solid rgba(255,255,255,0.5);
+
+    border-radius: 50%;
+
+    background:
+        rgba(255,255,255,0.06);
+
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.blast-info {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.blast-info strong {
+
+    font-size: 28px;
+
+    font-weight: 950;
+}
+
+.blast-info span {
+
+    color: #858e95;
+
+    font-size: 13px;
+
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   SOURCE
+========================================================= */
+
+.source-card {
+
+    padding: 22px 25px;
+
+    color: #69737b;
+
+    font-size: 12px;
+
+    font-weight: 750;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+.source-card a {
+
+    color: #b7bec3;
+
+    text-decoration: none;
+
+    font-weight: 900;
+}
+
+.source-card a:hover {
+
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.app-footer {
+
+    width: min(
+        calc(100% - 28px),
+        1100px
+    );
+
+    margin:
+        0 auto;
+
+    padding:
+        25px 0 45px;
+
+    color: #4d565d;
+
+    text-align: center;
+
+    font-size: 10px;
+
+    font-weight: 900;
+
+    letter-spacing: 2px;
+}
+
+.app-footer small {
+
+    display: block;
+
+    margin-top: 8px;
+
+    font-size: 10px;
+
+    letter-spacing: 0;
+
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .header-inner {
+
+        min-height: 125px;
+
+        padding:
+            22px 16px 20px;
+
+        align-items: flex-start;
+    }
+
+    .brand-small {
+
+        font-size: 11px;
+
+        letter-spacing: 4px;
+    }
+
+    .brand h1 {
+
+        font-size: 25px;
+    }
+
+    .status-pill {
+
+        min-width: 100px;
+
+        padding:
+            10px 12px;
+
+        font-size: 12px;
+    }
+
+    .app-main {
+
+        width:
+            calc(100% - 20px);
+
+        padding-top: 12px;
+    }
+
+    .search-card {
+
+        padding: 22px;
+
+        border-radius: 23px;
+    }
+
+    .search-box {
+
+        min-height: 68px;
+
+        padding:
+            0 18px;
+
+        border-radius: 19px;
+    }
+
+    .search-box input {
+
+        height: 62px;
+
+        font-size: 18px;
+    }
+
+    .section-title-row {
+
+        min-height: 78px;
+
+        padding:
+            0 20px;
+    }
+
+    .section-title-row h2 {
+
+        font-size: 20px;
+    }
+
+    .category-list {
+
+        padding: 15px;
+    }
+
+    .category-button {
+
+        padding:
+            10px 13px;
+
+        font-size: 12px;
+    }
+
+    .weapon-list {
+
+        grid-template-columns: 1fr;
+    }
+
+    .weapon-item {
+
+        min-height: 66px;
+
+        padding:
+            14px 17px;
+    }
+
+    .weapon-item-name {
+
+        font-size: 15px;
+    }
+
+    .detail-placeholder {
+
+        min-height: 540px;
+
+        border-radius: 25px;
+    }
+
+    .detail-card {
+
+        padding: 21px;
+
+        border-radius: 23px;
+    }
+
+    .detail-header {
+
+        padding: 21px;
+
+        border-radius: 23px;
+
+        align-items: flex-start;
+    }
+
+    .detail-header h2 {
+
+        font-size: 27px;
+    }
+
+    .cache-delete {
+
+        padding:
+            8px 9px;
+
+        font-size: 11px;
+    }
+
+    .stat-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+    .damage-values {
+
+        gap: 8px;
+    }
+
+    .damage-values > div {
+
+        min-height: 80px;
+
+        padding: 14px;
+    }
+
+    .damage-values strong {
+
+        font-size: 25px;
+    }
+
+    .blast-graph {
+
+        flex-direction: column;
+
+        gap: 22px;
+    }
+}
+
+
+/* =========================================================
+   SAFARI
+========================================================= */
+
+button,
+input {
+
+    -webkit-tap-highlight-color:
+        transparent;
+}
+
+button {
+
+    touch-action: manipulation;
+}
