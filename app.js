@@ -1,17 +1,20 @@
-/* =========================================================
-   SPLATOON 3
-   ブキ性能アナライザー
-   app.js
-========================================================= */
-
 "use strict";
 
 /* =========================================================
-   設定
+   SPLATOON 3
+   ブキ性能アナライザー
 ========================================================= */
 
-const WIKI_BASE = "https://wikiwiki.jp/splatoon3mix/";
-const JINA_BASE = "https://r.jina.ai/";
+const WIKI_BASE =
+    "https://wikiwiki.jp/splatoon3mix/";
+
+const JINA_BASE =
+    "https://r.jina.ai/";
+
+
+/* =========================================================
+   カテゴリ
+========================================================= */
 
 const CATEGORIES = [
     {
@@ -78,37 +81,6 @@ const CATEGORIES = [
 
 
 /* =========================================================
-   DOM
-========================================================= */
-
-const categoryArea =
-    document.querySelector("#categoryButtons") ||
-    document.querySelector(".category-buttons") ||
-    document.querySelector(".categories");
-
-const weaponList =
-    document.querySelector("#weaponList") ||
-    document.querySelector(".weapon-list");
-
-const weaponCount =
-    document.querySelector("#weaponCount") ||
-    document.querySelector(".weapon-count");
-
-const detailArea =
-    document.querySelector("#weaponDetail") ||
-    document.querySelector(".weapon-detail");
-
-const searchInput =
-    document.querySelector("#searchInput") ||
-    document.querySelector('input[type="search"]') ||
-    document.querySelector(".search-input");
-
-const statusText =
-    document.querySelector("#status") ||
-    document.querySelector(".status");
-
-
-/* =========================================================
    状態
 ========================================================= */
 
@@ -120,154 +92,155 @@ const categoryCache = new Map();
 
 
 /* =========================================================
-   IndexedDB
+   DOM
 ========================================================= */
 
-const DB_NAME = "splatoon3_weapon_analyzer";
-const DB_VERSION = 1;
-const STORE_NAME = "weapons";
+function findElement(selectors) {
 
-let dbPromise = null;
+    for (const selector of selectors) {
 
+        const element =
+            document.querySelector(selector);
 
-function openDB() {
-
-    if (dbPromise) {
-        return dbPromise;
+        if (element) {
+            return element;
+        }
     }
 
-    dbPromise = new Promise((resolve, reject) => {
+    return null;
+}
 
-        const request =
-            indexedDB.open(
-                DB_NAME,
-                DB_VERSION
+
+let categoryArea = null;
+let weaponList = null;
+let weaponCount = null;
+let detailArea = null;
+let searchInput = null;
+
+
+/* =========================================================
+   DOM自動検出
+========================================================= */
+
+function setupDOM() {
+
+    searchInput =
+        findElement([
+            "#searchInput",
+            "#weaponSearch",
+            ".search-input",
+            ".weapon-search",
+            'input[type="search"]'
+        ]);
+
+
+    weaponList =
+        findElement([
+            "#weaponList",
+            ".weapon-list",
+            ".weapons-list"
+        ]);
+
+
+    weaponCount =
+        findElement([
+            "#weaponCount",
+            ".weapon-count",
+            "#weaponCategoryCount"
+        ]);
+
+
+    detailArea =
+        findElement([
+            "#weaponDetail",
+            ".weapon-detail",
+            "#detailArea",
+            ".detail-area"
+        ]);
+
+
+    /*
+       カテゴリ領域を探す
+    */
+
+    categoryArea =
+        findElement([
+            "#categoryButtons",
+            ".category-buttons",
+            ".categories",
+            ".category-list"
+        ]);
+
+
+    /*
+       見つからない場合は
+       「ブキカテゴリ」という見出しを探す
+    */
+
+    if (!categoryArea) {
+
+        const headings =
+            Array.from(
+                document.querySelectorAll(
+                    "h1,h2,h3,h4,div,p,span"
+                )
             );
 
-        request.onupgradeneeded = () => {
 
-            const db = request.result;
+        const heading =
+            headings.find(
+                element =>
+                    element.textContent
+                        .trim() ===
+                    "ブキカテゴリ"
+            );
 
-            if (
-                !db.objectStoreNames.contains(
-                    STORE_NAME
-                )
-            ) {
 
-                db.createObjectStore(
-                    STORE_NAME,
-                    {
-                        keyPath: "url"
-                    }
+        if (heading) {
+
+            categoryArea =
+                document.createElement(
+                    "div"
                 );
 
-            }
-
-        };
-
-        request.onsuccess = () => {
-            resolve(request.result);
-        };
-
-        request.onerror = () => {
-            reject(request.error);
-        };
-
-    });
-
-    return dbPromise;
-}
+            categoryArea.className =
+                "category-buttons";
 
 
-async function getCachedWeapon(url) {
+            heading.parentElement.appendChild(
+                categoryArea
+            );
 
-    try {
+        }
 
-        const db =
-            await openDB();
-
-        return await new Promise(
-            (resolve, reject) => {
-
-                const transaction =
-                    db.transaction(
-                        STORE_NAME,
-                        "readonly"
-                    );
-
-                const store =
-                    transaction.objectStore(
-                        STORE_NAME
-                    );
-
-                const request =
-                    store.get(url);
-
-                request.onsuccess = () => {
-                    resolve(
-                        request.result || null
-                    );
-                };
-
-                request.onerror = () => {
-                    reject(request.error);
-                };
-
-            }
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "キャッシュ読み込み失敗:",
-            error
-        );
-
-        return null;
     }
-}
 
 
-async function saveCachedWeapon(data) {
+    /*
+       それでも見つからない場合は
+       ページ上部に作成
+    */
 
-    try {
+    if (!categoryArea) {
 
-        const db =
-            await openDB();
+        categoryArea =
+            document.createElement(
+                "div"
+            );
 
-        await new Promise(
-            (resolve, reject) => {
+        categoryArea.className =
+            "category-buttons";
 
-                const transaction =
-                    db.transaction(
-                        STORE_NAME,
-                        "readwrite"
-                    );
 
-                const store =
-                    transaction.objectStore(
-                        STORE_NAME
-                    );
+        const firstSection =
+            document.querySelector(
+                "main"
+            ) ||
+            document.body;
 
-                store.put(data);
 
-                transaction.oncomplete =
-                    resolve;
-
-                transaction.onerror = () => {
-                    reject(
-                        transaction.error
-                    );
-                };
-
-            }
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "キャッシュ保存失敗:",
-            error
+        firstSection.prepend(
+            categoryArea
         );
 
     }
@@ -275,21 +248,8 @@ async function saveCachedWeapon(data) {
 
 
 /* =========================================================
-   共通
+   HTMLエスケープ
 ========================================================= */
-
-function setStatus(text) {
-
-    if (statusText) {
-        statusText.textContent = text;
-    }
-
-    console.log(
-        "[ブキ性能アナライザー]",
-        text
-    );
-}
-
 
 function escapeHTML(value) {
 
@@ -302,15 +262,9 @@ function escapeHTML(value) {
 }
 
 
-/*
-   数字抽出
-
-   例:
-   "2.6"
-   "36.0～18.0"
-   "6F"
-   → 最初の数字を取得
-*/
+/* =========================================================
+   数値
+========================================================= */
 
 function numberFrom(value) {
 
@@ -321,17 +275,21 @@ function numberFrom(value) {
         return null;
     }
 
+
     const match =
         String(value).match(
             /-?\d+(?:\.\d+)?/
         );
 
+
     if (!match) {
         return null;
     }
 
+
     const number =
         Number(match[0]);
+
 
     return Number.isFinite(number)
         ? number
@@ -348,20 +306,29 @@ function numbersFrom(value) {
         return [];
     }
 
+
     const matches =
         String(value).match(
             /-?\d+(?:\.\d+)?/g
         );
 
+
     if (!matches) {
         return [];
     }
 
+
     return matches
         .map(Number)
-        .filter(Number.isFinite);
+        .filter(
+            Number.isFinite
+        );
 }
 
+
+/* =========================================================
+   Wikiテキスト
+========================================================= */
 
 function cleanWikiText(value) {
 
@@ -369,8 +336,10 @@ function cleanWikiText(value) {
         return "";
     }
 
+
     let text =
         String(value);
+
 
     text =
         text.replace(
@@ -378,11 +347,13 @@ function cleanWikiText(value) {
             ""
         );
 
+
     text =
         text.replace(
             /&attachref\([^)]*\);?/gi,
             ""
         );
+
 
     text =
         text.replace(
@@ -390,11 +361,13 @@ function cleanWikiText(value) {
             ""
         );
 
+
     text =
         text.replace(
             /&color\([^)]*\)\{([^}]*)\};?/gi,
             "$1"
         );
+
 
     text =
         text.replace(
@@ -402,11 +375,13 @@ function cleanWikiText(value) {
             " "
         );
 
+
     text =
         text.replace(
             /\[\[([^>\]]+)>[^\]]+\]\]/g,
             "$1"
         );
+
 
     text =
         text.replace(
@@ -414,11 +389,6 @@ function cleanWikiText(value) {
             "$1"
         );
 
-    text =
-        text.replace(
-            /\[([^\]]+)\]\([^)]+\)/g,
-            "$1"
-        );
 
     text =
         text.replace(
@@ -426,22 +396,27 @@ function cleanWikiText(value) {
             "$1"
         );
 
+
     text =
         text.replace(
             /''([^']+)''/g,
             "$1"
         );
 
+
     const textarea =
         document.createElement(
             "textarea"
         );
 
+
     textarea.innerHTML =
         text;
 
+
     text =
         textarea.value;
+
 
     return text
         .replace(/\s+/g, " ")
@@ -453,7 +428,7 @@ function cleanWikiText(value) {
    URL
 ========================================================= */
 
-function getWikiURL(page) {
+function wikiURL(page) {
 
     return (
         WIKI_BASE +
@@ -462,7 +437,7 @@ function getWikiURL(page) {
 }
 
 
-function getReaderURL(url) {
+function readerURL(url) {
 
     return (
         JINA_BASE +
@@ -477,29 +452,19 @@ function getReaderURL(url) {
 
 async function fetchWikiPage(page) {
 
-    const wikiURL =
-        getWikiURL(page);
+    const url =
+        wikiURL(page);
 
-    const readerURL =
-        getReaderURL(wikiURL);
-
-    console.log(
-        "取得:",
-        readerURL
-    );
 
     const response =
         await fetch(
-            readerURL,
+            readerURL(url),
             {
                 method: "GET",
-                cache: "no-store",
-                headers: {
-                    "Accept":
-                        "text/plain"
-                }
+                cache: "no-store"
             }
         );
+
 
     if (!response.ok) {
 
@@ -509,8 +474,10 @@ async function fetchWikiPage(page) {
 
     }
 
+
     const text =
         await response.text();
+
 
     if (
         !text ||
@@ -523,7 +490,205 @@ async function fetchWikiPage(page) {
 
     }
 
+
     return text;
+}
+
+
+/* =========================================================
+   IndexedDB
+========================================================= */
+
+const DB_NAME =
+    "splatoon3_weapon_analyzer";
+
+const DB_VERSION =
+    1;
+
+const STORE_NAME =
+    "weapons";
+
+let dbPromise = null;
+
+
+function openDB() {
+
+    if (dbPromise) {
+        return dbPromise;
+    }
+
+
+    dbPromise =
+        new Promise(
+            (resolve, reject) => {
+
+                const request =
+                    indexedDB.open(
+                        DB_NAME,
+                        DB_VERSION
+                    );
+
+
+                request.onupgradeneeded =
+                    () => {
+
+                        const db =
+                            request.result;
+
+
+                        if (
+                            !db.objectStoreNames
+                                .contains(
+                                    STORE_NAME
+                                )
+                        ) {
+
+                            db.createObjectStore(
+                                STORE_NAME,
+                                {
+                                    keyPath: "url"
+                                }
+                            );
+
+                        }
+
+                    };
+
+
+                request.onsuccess =
+                    () => {
+
+                        resolve(
+                            request.result
+                        );
+
+                    };
+
+
+                request.onerror =
+                    () => {
+
+                        reject(
+                            request.error
+                        );
+
+                    };
+
+            }
+        );
+
+
+    return dbPromise;
+}
+
+
+async function getCachedWeapon(url) {
+
+    try {
+
+        const db =
+            await openDB();
+
+
+        return await new Promise(
+            (resolve, reject) => {
+
+                const transaction =
+                    db.transaction(
+                        STORE_NAME,
+                        "readonly"
+                    );
+
+
+                const store =
+                    transaction.objectStore(
+                        STORE_NAME
+                    );
+
+
+                const request =
+                    store.get(url);
+
+
+                request.onsuccess =
+                    () => {
+
+                        resolve(
+                            request.result ||
+                            null
+                        );
+
+                    };
+
+
+                request.onerror =
+                    () => {
+
+                        reject(
+                            request.error
+                        );
+
+                    };
+
+            }
+        );
+
+    } catch {
+
+        return null;
+    }
+}
+
+
+async function saveCachedWeapon(data) {
+
+    try {
+
+        const db =
+            await openDB();
+
+
+        await new Promise(
+            (resolve, reject) => {
+
+                const transaction =
+                    db.transaction(
+                        STORE_NAME,
+                        "readwrite"
+                    );
+
+
+                transaction
+                    .objectStore(
+                        STORE_NAME
+                    )
+                    .put(data);
+
+
+                transaction.oncomplete =
+                    resolve;
+
+
+                transaction.onerror =
+                    () => {
+
+                        reject(
+                            transaction.error
+                        );
+
+                    };
+
+            }
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "キャッシュ保存失敗",
+            error
+        );
+
+    }
 }
 
 
@@ -536,25 +701,36 @@ function splitWikiRow(line) {
     let text =
         String(line).trim();
 
+
     if (
         !text.includes("|")
     ) {
         return [];
     }
 
+
     if (
         text.startsWith("|")
     ) {
+
         text =
             text.slice(1);
+
     }
+
 
     if (
         text.endsWith("|")
     ) {
+
         text =
-            text.slice(0, -1);
+            text.slice(
+                0,
+                -1
+            );
+
     }
+
 
     return text.split("|");
 }
@@ -570,31 +746,21 @@ function extractWeaponName(cell) {
         return null;
     }
 
+
     let text =
         String(cell);
 
-    text =
-        text.replace(
-            /&attachref\([^)]*\);?/gi,
-            ""
-        );
 
-    text =
-        text.replace(
-            /&ref\([^)]*\);?/gi,
-            ""
-        );
-
-
-    const linked =
+    const link =
         text.match(
             /\[\[([^>\]]+)>[^\]]+\]\]/
         );
 
-    if (linked) {
+
+    if (link) {
 
         text =
-            linked[1];
+            link[1];
 
     } else {
 
@@ -602,6 +768,7 @@ function extractWeaponName(cell) {
             text.match(
                 /\[\[([^\]]+)\]\]/
             );
+
 
         if (simple) {
             text =
@@ -612,99 +779,54 @@ function extractWeaponName(cell) {
 
 
     text =
-        text.replace(
-            /&br;/gi,
-            " "
+        cleanWikiText(
+            text
         );
 
-    text =
-        cleanWikiText(text);
-
-
-    /*
-       表の装飾記号
-    */
-
-    text =
-        text.replace(
-            /^#.*$/,
-            ""
-        );
-
-    text =
-        text.trim();
-
-
-    if (!text) {
-        return null;
-    }
-
-
-    /*
-       見出し・説明を除外
-    */
 
     const forbidden = [
+
         "ブキ",
         "武器",
-        "メインウェポン",
         "一覧",
-        "性能",
-        "詳細",
-        "名前",
         "名称",
+        "名前",
         "射程",
-        "直撃射程",
-        "爆風射程",
         "ダメージ",
         "連射速度",
-        "連射フレーム",
         "サブ",
         "スペシャル",
-        "必要ポイント",
-        "コメント",
-        "アップデート履歴"
+        "必要ポイント"
+
     ];
+
 
     if (
         forbidden.includes(text)
     ) {
+
         return null;
+
     }
 
 
-    /*
-       明らかに数値だけのセルを除外
-    */
-
     if (
-        /^[-+]?[\d.]+[F%pP]*$/.test(
-            text
-        )
-    ) {
-        return null;
-    }
-
-
-    /*
-       URLなどを除外
-    */
-
-    if (
-        /^https?:\/\//.test(text)
-    ) {
-        return null;
-    }
-
-
-    /*
-       長すぎる文章を除外
-    */
-
-    if (
+        !text ||
         text.length > 40
     ) {
+
         return null;
+
+    }
+
+
+    if (
+        /^[-+]?\d+(?:\.\d+)?[FpP%]*$/
+            .test(text)
+    ) {
+
+        return null;
+
     }
 
 
@@ -713,486 +835,10 @@ function extractWeaponName(cell) {
 
 
 /* =========================================================
-   PukiWiki武器表解析
-========================================================= */
-
-function parsePukiWikiTable(
-    text,
-    categoryId
-) {
-
-    const result = [];
-
-    const lines =
-        String(text)
-            .split(/\r?\n/);
-
-    let foundList =
-        false;
-
-    for (
-        let i = 0;
-        i < lines.length;
-        i++
-    ) {
-
-        const line =
-            lines[i].trim();
-
-
-        /*
-           一覧セクション
-        */
-
-        if (
-            line.startsWith("*") &&
-            line.includes("一覧")
-        ) {
-
-            foundList = true;
-
-            continue;
-        }
-
-
-        /*
-           一覧前でも表が始まっていたら
-           解析できるようにする
-        */
-
-        if (
-            !foundList &&
-            !line.startsWith("|")
-        ) {
-
-            continue;
-        }
-
-
-        /*
-           次の見出し
-        */
-
-        if (
-            foundList &&
-            line.startsWith("*") &&
-            !line.startsWith("|")
-        ) {
-
-            foundList = false;
-
-            continue;
-        }
-
-
-        if (
-            !line.startsWith("|")
-        ) {
-            continue;
-        }
-
-
-        const cells =
-            splitWikiRow(line);
-
-
-        if (
-            cells.length < 2
-        ) {
-            continue;
-        }
-
-
-        const name =
-            extractWeaponName(
-                cells[0]
-            );
-
-
-        if (!name) {
-            continue;
-        }
-
-
-        /*
-           ブラスター表などでは
-
-           武器名
-           射程
-           爆風射程
-           最大ダメージ
-           爆風ダメージ
-           連射
-           爆風範囲
-
-           の順
-        */
-
-        const values =
-            cells.map(
-                cell =>
-                    cleanWikiText(
-                        cell
-                    )
-            );
-
-
-        const range =
-            numberFrom(
-                values[1]
-            );
-
-        const blastRange =
-            numberFrom(
-                values[2]
-            );
-
-        const directDamage =
-            numberFrom(
-                values[3]
-            );
-
-        const blastDamage =
-            values[4] || null;
-
-        const fireFrames =
-            numberFrom(
-                values[5]
-            );
-
-        const blastRadius =
-            numberFrom(
-                values[6]
-            );
-
-
-        /*
-           個別ページURL
-
-           [[武器名>ブキ/ページ名]]
-           がある場合にも対応
-        */
-
-        let pageName =
-            `ブキ/${name}`;
-
-
-        const originalCell =
-            String(cells[0]);
-
-
-        const pageLink =
-            originalCell.match(
-                /\[\[[^>\]]+>([^\]]+)\]\]/
-            );
-
-
-        if (pageLink) {
-
-            pageName =
-                pageLink[1]
-                    .replace(
-                        /&br;/g,
-                        " "
-                    )
-                    .trim();
-
-        }
-
-
-        result.push({
-
-            name,
-
-            category:
-                categoryId,
-
-            page:
-                pageName,
-
-            url:
-                getWikiURL(
-                    pageName
-                ),
-
-            range,
-
-            blastRange,
-
-            directDamage,
-
-            blastDamage,
-
-            fireFrames,
-
-            blastRadius
-
-        });
-
-    }
-
-
-    return removeDuplicateWeapons(
-        result
-    );
-}
-
-
-/* =========================================================
-   Markdown表解析
-========================================================= */
-
-function parseMarkdownTable(
-    text,
-    categoryId
-) {
-
-    const result = [];
-
-    const lines =
-        String(text)
-            .split(/\r?\n/);
-
-
-    for (
-        const line of lines
-    ) {
-
-        const trimmed =
-            line.trim();
-
-
-        if (
-            !trimmed.startsWith("|")
-        ) {
-            continue;
-        }
-
-
-        const cells =
-            splitWikiRow(
-                trimmed
-            );
-
-
-        if (
-            cells.length < 2
-        ) {
-            continue;
-        }
-
-
-        /*
-           Markdown区切り行
-        */
-
-        if (
-            cells.every(
-                cell =>
-                    /^[-:\s]+$/.test(
-                        cell
-                    )
-            )
-        ) {
-
-            continue;
-        }
-
-
-        const name =
-            extractWeaponName(
-                cells[0]
-            );
-
-
-        if (!name) {
-            continue;
-        }
-
-
-        const values =
-            cells.map(
-                cell =>
-                    cleanWikiText(
-                        cell
-                    )
-            );
-
-
-        const pageName =
-            `ブキ/${name}`;
-
-
-        result.push({
-
-            name,
-
-            category:
-                categoryId,
-
-            page:
-                pageName,
-
-            url:
-                getWikiURL(
-                    pageName
-                ),
-
-            range:
-                numberFrom(
-                    values[1]
-                ),
-
-            blastRange:
-                numberFrom(
-                    values[2]
-                ),
-
-            directDamage:
-                numberFrom(
-                    values[3]
-                ),
-
-            blastDamage:
-                values[4] || null,
-
-            fireFrames:
-                numberFrom(
-                    values[5]
-                ),
-
-            blastRadius:
-                numberFrom(
-                    values[6]
-                )
-
-        });
-
-    }
-
-
-    return removeDuplicateWeapons(
-        result
-    );
-}
-
-
-/* =========================================================
-   HTML表解析
-========================================================= */
-
-function parseHTMLTable(
-    text,
-    categoryId
-) {
-
-    const result = [];
-
-    const container =
-        document.createElement(
-            "div"
-        );
-
-    container.innerHTML =
-        text;
-
-
-    const rows =
-        container.querySelectorAll(
-            "tr"
-        );
-
-
-    rows.forEach(
-        row => {
-
-            const cells =
-                Array.from(
-                    row.querySelectorAll(
-                        "th, td"
-                    )
-                );
-
-
-            if (
-                cells.length < 2
-            ) {
-                return;
-            }
-
-
-            const name =
-                extractWeaponName(
-                    cells[0].textContent
-                );
-
-
-            if (!name) {
-                return;
-            }
-
-
-            result.push({
-
-                name,
-
-                category:
-                    categoryId,
-
-                page:
-                    `ブキ/${name}`,
-
-                url:
-                    getWikiURL(
-                        `ブキ/${name}`
-                    ),
-
-                range:
-                    numberFrom(
-                        cells[1]?.textContent
-                    ),
-
-                blastRange:
-                    numberFrom(
-                        cells[2]?.textContent
-                    ),
-
-                directDamage:
-                    numberFrom(
-                        cells[3]?.textContent
-                    ),
-
-                blastDamage:
-                    cells[4]?.textContent ||
-                    null,
-
-                fireFrames:
-                    numberFrom(
-                        cells[5]?.textContent
-                    ),
-
-                blastRadius:
-                    numberFrom(
-                        cells[6]?.textContent
-                    )
-
-            });
-
-        }
-    );
-
-
-    return removeDuplicateWeapons(
-        result
-    );
-}
-
-
-/* =========================================================
    重複除去
 ========================================================= */
 
-function removeDuplicateWeapons(
+function uniqueWeapons(
     weapons
 ) {
 
@@ -1233,16 +879,145 @@ function removeDuplicateWeapons(
 
 
 /* =========================================================
-   カテゴリ取得
+   カテゴリ解析
+========================================================= */
+
+function parseCategory(
+    text,
+    categoryId
+) {
+
+    const result = [];
+
+    const lines =
+        String(text)
+            .split(/\r?\n/);
+
+
+    for (
+        const line of lines
+    ) {
+
+        if (
+            !line.trim().startsWith("|")
+        ) {
+            continue;
+        }
+
+
+        const cells =
+            splitWikiRow(
+                line
+            );
+
+
+        if (
+            cells.length < 2
+        ) {
+            continue;
+        }
+
+
+        const name =
+            extractWeaponName(
+                cells[0]
+            );
+
+
+        if (!name) {
+            continue;
+        }
+
+
+        let page =
+            `ブキ/${name}`;
+
+
+        const link =
+            String(cells[0])
+                .match(
+                    /\[\[[^>\]]+>([^\]]+)\]\]/
+                );
+
+
+        if (link) {
+
+            page =
+                link[1]
+                    .replace(
+                        /&br;/g,
+                        " "
+                    )
+                    .trim();
+
+        }
+
+
+        const values =
+            cells.map(
+                cleanWikiText
+            );
+
+
+        result.push({
+
+            name,
+
+            category:
+                categoryId,
+
+            page,
+
+            url:
+                wikiURL(page),
+
+            range:
+                numberFrom(
+                    values[1]
+                ),
+
+            blastRange:
+                numberFrom(
+                    values[2]
+                ),
+
+            directDamage:
+                numberFrom(
+                    values[3]
+                ),
+
+            blastDamage:
+                values[4] ||
+                null,
+
+            fireFrames:
+                numberFrom(
+                    values[5]
+                ),
+
+            blastRadius:
+                numberFrom(
+                    values[6]
+                )
+
+        });
+
+    }
+
+
+    return uniqueWeapons(
+        result
+    );
+}
+
+
+/* =========================================================
+   カテゴリ読み込み
 ========================================================= */
 
 async function loadCategory(
     categoryId
 ) {
-
-    /*
-       キャッシュ済みなら使用
-    */
 
     if (
         categoryCache.has(
@@ -1256,10 +1031,6 @@ async function loadCategory(
 
     }
 
-
-    /*
-       すべて
-    */
 
     if (
         categoryId === "all"
@@ -1287,6 +1058,7 @@ async function loadCategory(
                         category.id
                     );
 
+
                 all.push(
                     ...weapons
                 );
@@ -1304,7 +1076,7 @@ async function loadCategory(
 
 
         const result =
-            removeDuplicateWeapons(
+            uniqueWeapons(
                 all
             );
 
@@ -1331,73 +1103,17 @@ async function loadCategory(
     }
 
 
-    setStatus(
-        `${category.name}を読み込み中…`
-    );
-
-
     const text =
         await fetchWikiPage(
             category.page
         );
 
 
-    console.log(
-        "Wiki取得文字数:",
-        text.length
-    );
-
-
-    /*
-       PukiWiki
-    */
-
-    let weapons =
-        parsePukiWikiTable(
+    const weapons =
+        parseCategory(
             text,
             categoryId
         );
-
-
-    /*
-       Markdown
-    */
-
-    if (
-        weapons.length === 0
-    ) {
-
-        weapons =
-            parseMarkdownTable(
-                text,
-                categoryId
-            );
-
-    }
-
-
-    /*
-       HTML
-    */
-
-    if (
-        weapons.length === 0
-    ) {
-
-        weapons =
-            parseHTMLTable(
-                text,
-                categoryId
-            );
-
-    }
-
-
-    console.log(
-        `${category.name}:`,
-        weapons.length,
-        "種類"
-    );
 
 
     categoryCache.set(
@@ -1422,6 +1138,20 @@ function renderCategoryButtons() {
 
 
     categoryArea.innerHTML = "";
+
+
+    /*
+       ボタンを入れるための専用ラッパー
+    */
+
+    const wrapper =
+        document.createElement(
+            "div"
+        );
+
+
+    wrapper.className =
+        "category-buttons-inner";
 
 
     CATEGORIES.forEach(
@@ -1473,11 +1203,16 @@ function renderCategoryButtons() {
             );
 
 
-            categoryArea.appendChild(
+            wrapper.appendChild(
                 button
             );
 
         }
+    );
+
+
+    categoryArea.appendChild(
+        wrapper
     );
 }
 
@@ -1493,10 +1228,6 @@ async function selectCategory(
     currentCategory =
         categoryId;
 
-
-    /*
-       ボタン状態
-    */
 
     document
         .querySelectorAll(
@@ -1515,26 +1246,22 @@ async function selectCategory(
         );
 
 
-    /*
-       一覧を一旦ローディング
-    */
-
     if (weaponList) {
 
         weaponList.innerHTML = `
+
             <div class="empty-weapons">
-                <div class="empty-icon">
-                    …
-                </div>
 
                 <div class="empty-title">
-                    武器一覧を読み込み中
+                    読み込み中…
                 </div>
 
                 <div class="empty-text">
-                    WikiWikiからデータを取得しています
+                    ブキ一覧を取得しています
                 </div>
+
             </div>
+
         `;
 
     }
@@ -1557,21 +1284,17 @@ async function selectCategory(
         );
 
 
-        updateCategoryCount(
-            categoryId,
-            weapons.length
-        );
+        if (weaponCount) {
 
+            weaponCount.textContent =
+                weapons.length;
 
-        setStatus(
-            `${weapons.length}種類の武器を読み込みました`
-        );
+        }
 
 
     } catch (error) {
 
         console.error(
-            "カテゴリ取得エラー:",
             error
         );
 
@@ -1582,132 +1305,24 @@ async function selectCategory(
         if (weaponList) {
 
             weaponList.innerHTML = `
+
                 <div class="empty-weapons">
-                    <div class="empty-icon">
-                        !
-                    </div>
 
                     <div class="empty-title">
                         武器一覧を取得できませんでした
                     </div>
 
                     <div class="empty-text">
-                        ページを再読み込みして、もう一度試してください
+                        もう一度カテゴリを押してください
                     </div>
+
                 </div>
+
             `;
 
         }
 
-
-        updateCategoryCount(
-            categoryId,
-            0
-        );
-
-
-        setStatus(
-            "武器一覧の取得に失敗しました"
-        );
-
     }
-}
-
-
-/* =========================================================
-   件数
-========================================================= */
-
-function updateCategoryCount(
-    categoryId,
-    count
-) {
-
-    /*
-       data-category-count
-    */
-
-    document
-        .querySelectorAll(
-            "[data-category-count]"
-        )
-        .forEach(
-            element => {
-
-                if (
-                    element.dataset.categoryCount ===
-                    categoryId
-                ) {
-
-                    element.textContent =
-                        count;
-
-                }
-
-            }
-        );
-
-
-    /*
-       既存ヘッダー対応
-    */
-
-    const categoryCount =
-        document.querySelector(
-            ".category-count"
-        );
-
-
-    if (
-        categoryCount
-    ) {
-
-        const category =
-            CATEGORIES.find(
-                item =>
-                    item.id ===
-                    categoryId
-            );
-
-
-        if (category) {
-
-            categoryCount.textContent =
-                `${category.name}：${count}種類`;
-
-        }
-
-    }
-
-
-    /*
-       よくあるIDにも対応
-    */
-
-    const countElements = [
-        "#categoryCount",
-        "#weaponCategoryCount"
-    ];
-
-
-    countElements.forEach(
-        selector => {
-
-            const element =
-                document.querySelector(
-                    selector
-                );
-
-
-            if (element) {
-
-                element.textContent =
-                    count;
-
-            }
-
-        }
-    );
 }
 
 
@@ -1740,6 +1355,7 @@ function renderWeaponList(
     ) {
 
         weaponList.innerHTML = `
+
             <div class="empty-weapons">
 
                 <div class="empty-icon">
@@ -1755,96 +1371,83 @@ function renderWeaponList(
                 </div>
 
             </div>
+
         `;
 
         return;
     }
 
 
-    weapons.forEach(
-        weapon => {
+    for (
+        const weapon of weapons
+    ) {
 
-            const button =
-                document.createElement(
-                    "button"
+        const button =
+            document.createElement(
+                "button"
+            );
+
+
+        button.type =
+            "button";
+
+
+        button.className =
+            "weapon-card";
+
+
+        button.innerHTML = `
+
+            <div class="weapon-card-name">
+                ${escapeHTML(
+                    weapon.name
+                )}
+            </div>
+
+            <div class="weapon-card-stats">
+
+                ${
+                    weapon.range !== null
+                        ? `
+                            <span>
+                                射程 ${weapon.range}
+                            </span>
+                          `
+                        : ""
+                }
+
+                ${
+                    weapon.directDamage !== null
+                        ? `
+                            <span>
+                                ${weapon.directDamage}ダメ
+                            </span>
+                          `
+                        : ""
+                }
+
+            </div>
+
+        `;
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                loadWeapon(
+                    weapon
                 );
 
-
-            button.type =
-                "button";
-
-
-            button.className =
-                "weapon-card";
+            }
+        );
 
 
-            button.dataset.weapon =
-                weapon.name;
+        weaponList.appendChild(
+            button
+        );
 
-
-            button.innerHTML = `
-
-                <div class="weapon-card-name">
-                    ${escapeHTML(
-                        weapon.name
-                    )}
-                </div>
-
-                <div class="weapon-card-stats">
-
-                    ${
-                        weapon.range !== null
-                            ? `
-                                <span>
-                                    射程 ${weapon.range}
-                                </span>
-                              `
-                            : ""
-                    }
-
-                    ${
-                        weapon.directDamage !== null
-                            ? `
-                                <span>
-                                    ${weapon.directDamage}ダメ
-                                </span>
-                              `
-                            : ""
-                    }
-
-                    ${
-                        weapon.blastRadius !== null
-                            ? `
-                                <span>
-                                    爆風 ${weapon.blastRadius}
-                                </span>
-                              `
-                            : ""
-                    }
-
-                </div>
-
-            `;
-
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    loadWeapon(
-                        weapon
-                    );
-
-                }
-            );
-
-
-            weaponList.appendChild(
-                button
-            );
-
-        }
-    );
+    }
 }
 
 
@@ -1900,7 +1503,7 @@ function setupSearch() {
 
 
 /* =========================================================
-   個別ページ解析
+   武器詳細解析
 ========================================================= */
 
 function parseWeaponDetail(
@@ -1912,17 +1515,11 @@ function parseWeaponDetail(
 
         ...basic,
 
-        rawText:
-            text,
+        sub: null,
 
-        sub:
-            null,
+        special: null,
 
-        special:
-            null,
-
-        points:
-            null,
+        points: null,
 
         maxRange:
             basic.range,
@@ -1933,11 +1530,9 @@ function parseWeaponDetail(
         maxDamage:
             basic.directDamage,
 
-        minDamage:
-            null,
+        minDamage: null,
 
-        killCount:
-            null,
+        killCount: null,
 
         fireFrames:
             basic.fireFrames,
@@ -1945,14 +1540,9 @@ function parseWeaponDetail(
         blastRadius:
             basic.blastRadius,
 
-        paintRange:
-            null,
+        ktt: null,
 
-        dps:
-            null,
-
-        ktt:
-            null
+        dps: null
 
     };
 
@@ -1963,340 +1553,166 @@ function parseWeaponDetail(
 
 
     for (
-        const line
-        of lines
+        const line of lines
     ) {
 
-        const clean =
-            cleanWikiText(
+        const cells =
+            splitWikiRow(
                 line
             );
 
 
-        /*
-           サブ
-        */
+        if (
+            cells.length < 2
+        ) {
+            continue;
+        }
+
+
+        const key =
+            cleanWikiText(
+                cells[0]
+            );
+
+
+        const value =
+            cleanWikiText(
+                cells[1]
+            );
+
 
         if (
-            line.includes(
-                "サブ"
-            ) &&
-            !line.includes(
-                "サブ性能"
-            )
+            key.includes("サブ")
         ) {
 
-            const cells =
-                splitWikiRow(
-                    line
+            data.sub =
+                value;
+
+        }
+
+
+        if (
+            key.includes("スペシャル")
+        ) {
+
+            data.special =
+                value;
+
+        }
+
+
+        if (
+            key.includes("必要ポイント")
+        ) {
+
+            data.points =
+                numberFrom(
+                    value
+                );
+
+        }
+
+
+        if (
+            key.includes("有効射程")
+        ) {
+
+            data.maxRange =
+                numberFrom(
+                    value
+                );
+
+        }
+
+
+        if (
+            key.includes("ダメージ")
+        ) {
+
+            const nums =
+                numbersFrom(
+                    value
                 );
 
 
             if (
-                cells.length >= 2
+                nums.length >= 1
             ) {
 
-                data.sub =
-                    cleanWikiText(
-                        cells[1]
-                    );
+                data.maxDamage =
+                    nums[0];
+
+            }
+
+
+            if (
+                nums.length >= 2
+            ) {
+
+                data.minDamage =
+                    nums[
+                        nums.length - 1
+                    ];
 
             }
 
         }
 
 
-        /*
-           スペシャル
-        */
-
         if (
-            line.includes(
-                "スペシャル"
-            )
+            key.includes("確定数")
         ) {
 
-            const cells =
-                splitWikiRow(
-                    line
-                );
-
-
-            if (
-                cells.length >= 2
-            ) {
-
-                data.special =
-                    cleanWikiText(
-                        cells[1]
-                    );
-
-            }
+            data.killCount =
+                value;
 
         }
 
 
-        /*
-           必要ポイント
-        */
-
         if (
-            line.includes(
-                "必要ポイント"
-            ) ||
-            line.includes(
-                "必要P"
-            )
+            key.includes("連射フレーム")
         ) {
 
-            const cells =
-                splitWikiRow(
-                    line
+            data.fireFrames =
+                numberFrom(
+                    value
                 );
-
-
-            if (
-                cells.length >= 2
-            ) {
-
-                data.points =
-                    numberFrom(
-                        cells[1]
-                    );
-
-            }
 
         }
 
 
-        /*
-           有効射程
-        */
-
         if (
-            line.includes(
-                "有効射程"
-            )
+            key.includes("爆風範囲")
         ) {
 
-            const cells =
-                splitWikiRow(
-                    line
+            data.blastRadius =
+                numberFrom(
+                    value
                 );
-
-
-            if (
-                cells.length >= 2
-            ) {
-
-                data.maxRange =
-                    numberFrom(
-                        cells[1]
-                    );
-
-            }
 
         }
 
 
-        /*
-           ダメージ
-        */
-
         if (
-            line.includes(
-                "ダメージ"
-            )
+            key === "DPS"
         ) {
 
-            const cells =
-                splitWikiRow(
-                    line
+            data.dps =
+                numberFrom(
+                    value
                 );
-
-
-            if (
-                cells.length >= 2
-            ) {
-
-                const nums =
-                    numbersFrom(
-                        cells[1]
-                    );
-
-
-                if (
-                    nums.length >= 1
-                ) {
-
-                    data.maxDamage =
-                        nums[0];
-
-                }
-
-
-                if (
-                    nums.length >= 2
-                ) {
-
-                    data.minDamage =
-                        nums[
-                            nums.length - 1
-                        ];
-
-                }
-
-            }
 
         }
 
 
-        /*
-           確定数
-        */
-
         if (
-            line.includes(
-                "確定数"
-            )
+            key.includes("キルタイム")
         ) {
 
-            const cells =
-                splitWikiRow(
-                    line
+            data.ktt =
+                numberFrom(
+                    value
                 );
-
-
-            if (
-                cells.length >= 2
-            ) {
-
-                data.killCount =
-                    cleanWikiText(
-                        cells[1]
-                    );
-
-            }
-
-        }
-
-
-        /*
-           連射フレーム
-        */
-
-        if (
-            line.includes(
-                "連射フレーム"
-            )
-        ) {
-
-            const cells =
-                splitWikiRow(
-                    line
-                );
-
-
-            if (
-                cells.length >= 2
-            ) {
-
-                data.fireFrames =
-                    numberFrom(
-                        cells[1]
-                    );
-
-            }
-
-        }
-
-
-        /*
-           爆風範囲
-        */
-
-        if (
-            line.includes(
-                "爆風範囲"
-            )
-        ) {
-
-            const cells =
-                splitWikiRow(
-                    line
-                );
-
-
-            if (
-                cells.length >= 2
-            ) {
-
-                data.blastRadius =
-                    numberFrom(
-                        cells[1]
-                    );
-
-            }
-
-        }
-
-
-        /*
-           DPS
-        */
-
-        if (
-            /\bDPS\b/i.test(
-                line
-            )
-        ) {
-
-            const cells =
-                splitWikiRow(
-                    line
-                );
-
-
-            if (
-                cells.length >= 2
-            ) {
-
-                data.dps =
-                    numberFrom(
-                        cells[1]
-                    );
-
-            }
-
-        }
-
-
-        /*
-           キルタイム
-        */
-
-        if (
-            line.includes(
-                "キルタイム"
-            )
-        ) {
-
-            const cells =
-                splitWikiRow(
-                    line
-                );
-
-
-            if (
-                cells.length >= 2
-            ) {
-
-                data.ktt =
-                    numberFrom(
-                        cells[1]
-                    );
-
-            }
 
         }
 
@@ -2308,7 +1724,7 @@ function parseWeaponDetail(
 
 
 /* =========================================================
-   武器詳細取得
+   武器読み込み
 ========================================================= */
 
 async function loadWeapon(
@@ -2324,17 +1740,9 @@ async function loadWeapon(
     }
 
 
-    /*
-       ローディング
-    */
-
     detailArea.innerHTML = `
 
         <div class="detail-loading">
-
-            <div class="loading-mark">
-                …
-            </div>
 
             <div>
                 ${escapeHTML(
@@ -2351,10 +1759,6 @@ async function loadWeapon(
     `;
 
 
-    /*
-       IndexedDB
-    */
-
     const cached =
         await getCachedWeapon(
             weapon.url
@@ -2363,21 +1767,9 @@ async function loadWeapon(
 
     if (cached) {
 
-        console.log(
-            "キャッシュ使用:",
-            weapon.name
-        );
-
-
         renderWeaponDetail(
             cached
         );
-
-
-        setStatus(
-            `${weapon.name}をキャッシュから読み込みました`
-        );
-
 
         return;
     }
@@ -2385,41 +1777,13 @@ async function loadWeapon(
 
     try {
 
-        setStatus(
-            `${weapon.name}の性能データを取得中…`
-        );
-
-
-        const response =
-            await fetch(
-                getReaderURL(
-                    weapon.url
-                ),
-                {
-                    method: "GET",
-                    cache: "no-store",
-                    headers: {
-                        "Accept":
-                            "text/plain"
-                    }
-                }
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `HTTP ${response.status}`
-            );
-
-        }
-
-
         const text =
-            await response.text();
+            await fetchWikiPage(
+                weapon.page
+            );
 
 
-        const detail =
+        const data =
             parseWeaponDetail(
                 text,
                 weapon
@@ -2427,39 +1791,25 @@ async function loadWeapon(
 
 
         await saveCachedWeapon(
-            detail
+            data
         );
 
 
         renderWeaponDetail(
-            detail
-        );
-
-
-        setStatus(
-            `${weapon.name}を読み込みました`
+            data
         );
 
 
     } catch (error) {
 
         console.error(
-            "武器詳細取得失敗:",
+            "詳細取得失敗:",
             error
         );
 
 
-        /*
-           一覧から取得したデータだけでも表示
-        */
-
         renderWeaponDetail(
             weapon
-        );
-
-
-        setStatus(
-            "詳細データの取得に失敗しました"
         );
 
     }
@@ -2470,7 +1820,7 @@ async function loadWeapon(
    グラフ
 ========================================================= */
 
-function percentage(
+function percent(
     value,
     max
 ) {
@@ -2480,9 +1830,7 @@ function percentage(
         value === undefined ||
         !max
     ) {
-
         return 0;
-
     }
 
 
@@ -2490,19 +1838,13 @@ function percentage(
         0,
         Math.min(
             100,
-            (value / max) * 100
+            value / max * 100
         )
     );
 }
 
 
-/* =========================================================
-   射程グラフ
-========================================================= */
-
-function createRangeGraph(
-    data
-) {
+function rangeGraph(data) {
 
     const range =
         numberFrom(
@@ -2511,45 +1853,17 @@ function createRangeGraph(
         );
 
 
-    const blastRange =
+    const blast =
         numberFrom(
             data.blastRange
         );
 
 
-    if (
-        range === null &&
-        blastRange === null
-    ) {
-
-        return `
-            <div class="graph-empty">
-                射程データなし
-            </div>
-        `;
-
-    }
-
-
     const max =
         Math.max(
             range || 0,
-            blastRange || 0,
+            blast || 0,
             5
-        );
-
-
-    const rangePercent =
-        percentage(
-            range,
-            max
-        );
-
-
-    const blastPercent =
-        percentage(
-            blastRange,
-            max
         );
 
 
@@ -2562,7 +1876,6 @@ function createRangeGraph(
                 <span>${max}</span>
             </div>
 
-
             <div class="range-track">
 
                 ${
@@ -2570,23 +1883,24 @@ function createRangeGraph(
                         ? `
                             <div
                                 class="range-bar"
-                                style="
-                                    width:${rangePercent}%;
-                                "
+                                style="width:${percent(
+                                    range,
+                                    max
+                                )}%"
                             ></div>
                           `
                         : ""
                 }
 
-
                 ${
-                    blastRange !== null
+                    blast !== null
                         ? `
                             <div
                                 class="blast-point"
-                                style="
-                                    left:${blastPercent}%;
-                                "
+                                style="left:${percent(
+                                    blast,
+                                    max
+                                )}%"
                             ></div>
                           `
                         : ""
@@ -2594,41 +1908,25 @@ function createRangeGraph(
 
             </div>
 
-
             <div class="range-values">
 
-                ${
-                    range !== null
-                        ? `
-                            <div>
-                                <strong>
-                                    ${range}
-                                </strong>
+                <div>
+                    <strong>
+                        ${range ?? "—"}
+                    </strong>
+                    <span>
+                        有効射程
+                    </span>
+                </div>
 
-                                <span>
-                                    有効射程
-                                </span>
-                            </div>
-                          `
-                        : ""
-                }
-
-
-                ${
-                    blastRange !== null
-                        ? `
-                            <div>
-                                <strong>
-                                    ${blastRange}
-                                </strong>
-
-                                <span>
-                                    爆風射程
-                                </span>
-                            </div>
-                          `
-                        : ""
-                }
+                <div>
+                    <strong>
+                        ${blast ?? "—"}
+                    </strong>
+                    <span>
+                        爆風射程
+                    </span>
+                </div>
 
             </div>
 
@@ -2638,20 +1936,98 @@ function createRangeGraph(
 }
 
 
-/* =========================================================
-   爆風
-========================================================= */
+function damageGraph(data) {
 
-function createBlastGraph(
-    data
-) {
-
-    const range =
+    const max =
         numberFrom(
-            data.maxRange ??
-            data.range
+            data.maxDamage ??
+            data.directDamage
         );
 
+
+    const min =
+        numberFrom(
+            data.minDamage
+        );
+
+
+    if (max === null) {
+
+        return `
+            <div class="graph-empty">
+                データなし
+            </div>
+        `;
+
+    }
+
+
+    return `
+
+        <div class="damage-graph">
+
+            <div class="damage-row">
+
+                <span>
+                    最大
+                </span>
+
+                <div class="damage-track">
+
+                    <div
+                        class="damage-bar"
+                        style="width:${percent(
+                            max,
+                            100
+                        )}%"
+                    ></div>
+
+                </div>
+
+                <strong>
+                    ${max}
+                </strong>
+
+            </div>
+
+
+            ${
+                min !== null
+                    ? `
+                        <div class="damage-row">
+
+                            <span>
+                                最小
+                            </span>
+
+                            <div class="damage-track">
+
+                                <div
+                                    class="damage-bar damage-min"
+                                    style="width:${percent(
+                                        min,
+                                        100
+                                    )}%"
+                                ></div>
+
+                            </div>
+
+                            <strong>
+                                ${min}
+                            </strong>
+
+                        </div>
+                      `
+                    : ""
+            }
+
+        </div>
+
+    `;
+}
+
+
+function blastGraph(data) {
 
     const radius =
         numberFrom(
@@ -2659,10 +2035,7 @@ function createBlastGraph(
         );
 
 
-    if (
-        range === null ||
-        radius === null
-    ) {
+    if (radius === null) {
 
         return `
             <div class="graph-empty">
@@ -2673,11 +2046,11 @@ function createBlastGraph(
     }
 
 
-    const circleSize =
+    const size =
         Math.max(
-            30,
+            35,
             Math.min(
-                140,
+                130,
                 radius * 90
             )
         );
@@ -2689,22 +2062,15 @@ function createBlastGraph(
 
             <div class="blast-axis">
 
-                <div
-                    class="blast-line"
-                    style="width:70%;"
-                ></div>
+                <div class="blast-line"></div>
 
-
-                <div
-                    class="blast-origin"
-                    style="left:70%;"
-                >
+                <div class="blast-origin">
 
                     <div
                         class="blast-circle"
                         style="
-                            width:${circleSize}px;
-                            height:${circleSize}px;
+                            width:${size}px;
+                            height:${size}px;
                         "
                     ></div>
 
@@ -2712,15 +2078,7 @@ function createBlastGraph(
 
             </div>
 
-
             <div class="blast-label">
-
-                射程
-                <strong>
-                    ${range}
-                </strong>
-
-                ＋
 
                 爆風半径
                 <strong>
@@ -2735,153 +2093,22 @@ function createBlastGraph(
 }
 
 
-/* =========================================================
-   ダメージ
-========================================================= */
-
-function createDamageGraph(
-    data
-) {
-
-    const maxDamage =
-        numberFrom(
-            data.maxDamage ??
-            data.directDamage
-        );
-
-
-    const minDamage =
-        numberFrom(
-            data.minDamage
-        );
-
-
-    if (
-        maxDamage === null
-    ) {
-
-        return `
-            <div class="graph-empty">
-                ダメージデータなし
-            </div>
-        `;
-
-    }
-
+function falloffGraph(data) {
 
     const max =
-        Math.max(
-            100,
-            maxDamage,
-            minDamage || 0
-        );
-
-
-    const maxWidth =
-        percentage(
-            maxDamage,
-            max
-        );
-
-
-    const minWidth =
-        percentage(
-            minDamage,
-            max
-        );
-
-
-    return `
-
-        <div class="damage-graph">
-
-            <div class="damage-row">
-
-                <span>
-                    最大
-                </span>
-
-
-                <div class="damage-track">
-
-                    <div
-                        class="damage-bar"
-                        style="
-                            width:${maxWidth}%;
-                        "
-                    ></div>
-
-                </div>
-
-
-                <strong>
-                    ${maxDamage}
-                </strong>
-
-            </div>
-
-
-            ${
-                minDamage !== null
-                    ? `
-                        <div class="damage-row">
-
-                            <span>
-                                最小
-                            </span>
-
-
-                            <div class="damage-track">
-
-                                <div
-                                    class="damage-bar damage-min"
-                                    style="
-                                        width:${minWidth}%;
-                                    "
-                                ></div>
-
-                            </div>
-
-
-                            <strong>
-                                ${minDamage}
-                            </strong>
-
-                        </div>
-                      `
-                    : ""
-            }
-
-        </div>
-
-    `;
-}
-
-
-/* =========================================================
-   距離減衰
-========================================================= */
-
-function createFalloffGraph(
-    data
-) {
-
-    const maxDamage =
         numberFrom(
             data.maxDamage ??
             data.directDamage
         );
 
 
-    const minDamage =
+    const min =
         numberFrom(
             data.minDamage
         );
 
 
-    if (
-        maxDamage === null
-    ) {
+    if (max === null) {
 
         return `
             <div class="graph-empty">
@@ -2892,10 +2119,8 @@ function createFalloffGraph(
     }
 
 
-    const endDamage =
-        minDamage !== null
-            ? minDamage
-            : 0;
+    const end =
+        min ?? 0;
 
 
     return `
@@ -2905,20 +2130,17 @@ function createFalloffGraph(
             <div class="falloff-y">
 
                 <span>
-                    ${maxDamage}
+                    ${max}
                 </span>
 
                 <span>
                     ${Math.round(
-                        (
-                            maxDamage +
-                            endDamage
-                        ) / 2
+                        (max + end) / 2
                     )}
                 </span>
 
                 <span>
-                    ${endDamage}
+                    ${end}
                 </span>
 
             </div>
@@ -2933,12 +2155,12 @@ function createFalloffGraph(
 
                     <polyline
                         points="
-                            0,10
-                            50,15
-                            100,25
-                            150,40
-                            200,60
-                            250,82
+                            0,8
+                            45,12
+                            90,20
+                            135,34
+                            180,52
+                            225,75
                             300,105
                         "
                         fill="none"
@@ -2982,24 +2204,9 @@ function renderWeaponDetail(
     }
 
 
-    const range =
-        data.maxRange ??
-        data.range;
-
-
-    const blastRange =
-        data.blastRange;
-
-
-    const maxDamage =
-        data.maxDamage ??
-        data.directDamage;
-
-
     detailArea.innerHTML = `
 
         <section class="weapon-detail-card">
-
 
             <div class="detail-header">
 
@@ -3011,7 +2218,6 @@ function renderWeaponDetail(
                             ""
                         )}
                     </div>
-
 
                     <h2>
                         ${escapeHTML(
@@ -3031,9 +2237,7 @@ function renderWeaponDetail(
                     射程
                 </h3>
 
-                ${createRangeGraph(
-                    data
-                )}
+                ${rangeGraph(data)}
 
             </section>
 
@@ -3048,9 +2252,7 @@ function renderWeaponDetail(
                                 爆風範囲
                             </h3>
 
-                            ${createBlastGraph(
-                                data
-                            )}
+                            ${blastGraph(data)}
 
                         </section>
                       `
@@ -3064,9 +2266,7 @@ function renderWeaponDetail(
                     ダメージ
                 </h3>
 
-                ${createDamageGraph(
-                    data
-                )}
+                ${damageGraph(data)}
 
             </section>
 
@@ -3077,178 +2277,128 @@ function renderWeaponDetail(
                     距離減衰
                 </h3>
 
-                ${createFalloffGraph(
-                    data
-                )}
+                ${falloffGraph(data)}
 
             </section>
 
 
             <section class="stats-grid">
 
-
                 <div class="stat-card">
-
-                    <span>
-                        最大射程
-                    </span>
-
+                    <span>最大射程</span>
                     <strong>
-                        ${range ?? "—"}
+                        ${data.maxRange ??
+                        data.range ??
+                        "—"}
                     </strong>
-
                 </div>
 
 
                 <div class="stat-card">
-
-                    <span>
-                        爆風射程
-                    </span>
-
+                    <span>最大ダメージ</span>
                     <strong>
-                        ${blastRange ?? "—"}
+                        ${data.maxDamage ??
+                        data.directDamage ??
+                        "—"}
                     </strong>
-
                 </div>
 
 
                 <div class="stat-card">
-
-                    <span>
-                        最大ダメージ
-                    </span>
-
+                    <span>最小ダメージ</span>
                     <strong>
-                        ${maxDamage ?? "—"}
+                        ${data.minDamage ??
+                        "—"}
                     </strong>
-
                 </div>
 
 
                 <div class="stat-card">
-
-                    <span>
-                        最小ダメージ
-                    </span>
-
+                    <span>確定数</span>
                     <strong>
-                        ${data.minDamage ?? "—"}
+                        ${data.killCount ??
+                        "—"}
                     </strong>
-
                 </div>
 
 
                 <div class="stat-card">
-
-                    <span>
-                        確定数
-                    </span>
-
+                    <span>連射フレーム</span>
                     <strong>
-                        ${data.killCount ?? "—"}
+                        ${data.fireFrames ??
+                        "—"}
                     </strong>
-
                 </div>
 
 
                 <div class="stat-card">
-
-                    <span>
-                        連射フレーム
-                    </span>
-
+                    <span>キル速</span>
                     <strong>
-                        ${data.fireFrames ?? "—"}
+                        ${data.ktt ??
+                        "—"}
                     </strong>
-
                 </div>
 
 
                 <div class="stat-card">
-
-                    <span>
-                        キル速
-                    </span>
-
+                    <span>爆風半径</span>
                     <strong>
-                        ${data.ktt ?? "—"}
+                        ${data.blastRadius ??
+                        "—"}
                     </strong>
-
                 </div>
 
 
                 <div class="stat-card">
-
-                    <span>
-                        爆風半径
-                    </span>
-
+                    <span>スペシャル必要ポイント</span>
                     <strong>
-                        ${data.blastRadius ?? "—"}
+                        ${data.points ??
+                        "—"}
                     </strong>
-
                 </div>
-
 
             </section>
 
 
             <section class="weapon-info">
 
-
                 <div>
-
-                    <span>
-                        サブ
-                    </span>
-
+                    <span>サブ</span>
                     <strong>
                         ${escapeHTML(
-                            data.sub || "—"
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        スペシャル
-                    </span>
-
-                    <strong>
-                        ${escapeHTML(
-                            data.special || "—"
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        スペシャル必要ポイント
-                    </span>
-
-                    <strong>
-                        ${
-                            data.points ??
+                            data.sub ||
                             "—"
-                        }
+                        )}
                     </strong>
-
                 </div>
 
+
+                <div>
+                    <span>スペシャル</span>
+                    <strong>
+                        ${escapeHTML(
+                            data.special ||
+                            "—"
+                        )}
+                    </strong>
+                </div>
 
             </section>
-
 
         </section>
 
     `;
+}
+
+
+/* =========================================================
+   検索セットアップ
+========================================================= */
+
+function initializeSearch() {
+
+    setupSearch();
+
 }
 
 
@@ -3258,24 +2408,31 @@ function renderWeaponDetail(
 
 async function initialize() {
 
-    setStatus(
-        "初期化中…"
+    console.log(
+        "ブキ性能アナライザー開始"
     );
 
 
     /*
-       カテゴリを先に描画
-       Wiki取得を待たせない
+       まずDOMを確実に取得
+    */
+
+    setupDOM();
+
+
+    /*
+       カテゴリボタンを
+       Wiki取得より先に表示
     */
 
     renderCategoryButtons();
 
 
-    setupSearch();
+    initializeSearch();
 
 
     /*
-       ブラスターを初期表示
+       初期カテゴリ
     */
 
     await selectCategory(
